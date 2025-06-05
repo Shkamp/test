@@ -41,6 +41,7 @@ public class Main {
         boolean payAllWins = true;
         String symbolConfig = null;
         String paylinesConfig = null;
+        int autospinCount = 1000;
         SlotMachine slotMachine;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
             Properties config = new Properties();
@@ -50,12 +51,20 @@ public class Main {
             symbolConfig = config.getProperty("symbols");
             paylinesConfig = config.getProperty("paylines");
             String minScatterDistanceStr = config.getProperty("minScatterDistance");
+            String autospinCountStr = config.getProperty("autospinCount");
             int minScatterDistance = 3;
             if (minScatterDistanceStr != null) {
                 try {
                     minScatterDistance = Integer.parseInt(minScatterDistanceStr);
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid minScatterDistance in config, using default 3.");
+                }
+            }
+            if (autospinCountStr != null) {
+                try {
+                    autospinCount = Integer.parseInt(autospinCountStr);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid autospinCount in config, using default 1000.");
                 }
             }
             slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance);
@@ -71,7 +80,7 @@ public class Main {
         stats.startingBalance = 100;
         try {
             while (running) {
-                printMenu(slotMachine, freeSpins);
+                printMenu(slotMachine, freeSpins, autospinCount);
                 String input = reader.readLine();
                 switch (input) {
                     case "1":
@@ -90,7 +99,7 @@ public class Main {
                         changeBetAmount(reader, slotMachine);
                         break;
                     case "5":
-                        runAutoSpins(slotMachine, stats, reader);
+                        runAutoSpins(slotMachine, stats, reader, autospinCount);
                         break;
                     default:
                         System.out.println("Invalid option. Try again.");
@@ -106,7 +115,7 @@ public class Main {
      * @param slotMachine The slot machine instance
      * @param freeSpins Number of free spins left
      */
-    private static void printMenu(SlotMachine slotMachine, int freeSpins) {
+    private static void printMenu(SlotMachine slotMachine, int freeSpins, int autospinCount) {
         if (freeSpins > 0) {
             System.out.printf("%nBalance: %d (Free Spins left: %d)%n", slotMachine.getBalance(), freeSpins);
         } else {
@@ -117,7 +126,7 @@ public class Main {
         System.out.println("2. View Payout Table");
         System.out.println("3. Exit");
         System.out.println("4. Change Bet Amount");
-        System.out.println("5. Run 1000 Auto-Spins (Analytics)");
+        System.out.printf("5. Run %d Auto-Spins (Analytics)\n", autospinCount);
         System.out.println("Choose an option: ");
     }
 
@@ -280,30 +289,31 @@ public class Main {
      * @param slotMachine The slot machine instance
      * @param stats Session statistics
      * @param reader BufferedReader for user input
+     * @param autospinCount Number of auto-spins to run
      * @throws IOException If an input or output exception occurred
      */
-    private static void runAutoSpins(SlotMachine slotMachine, SessionStats stats, BufferedReader reader) throws IOException {
-        System.out.println("Running 1000 auto-spins...");
-        int autoSpins = 1000;
+    private static void runAutoSpins(SlotMachine slotMachine, SessionStats stats, BufferedReader reader, int autospinCount) throws IOException {
+        System.out.printf("Running %d auto-spins...%n", autospinCount);
         int autoTotalWon = 0;
         int autoBiggestWin = 0;
         int autoTotalLost = 0;
-        int startBalance = slotMachine.getBalance();
-        for (int i = 0; i < autoSpins; i++) {
-            if (slotMachine.getBalance() < slotMachine.getBetAmount()) break;
-            slotMachine.deductBalance(slotMachine.getBetAmount());
+        int autoBalance = slotMachine.getBetAmount() * autospinCount; // Start with enough for all spins
+        int startBalance = autoBalance;
+        for (int i = 0; i < autospinCount; i++) {
+            if (autoBalance < slotMachine.getBetAmount()) break;
+            autoBalance -= slotMachine.getBetAmount();
             SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
             if (result.totalPayout > 0) {
-                slotMachine.addBalance(result.totalPayout);
+                autoBalance += result.totalPayout;
                 autoTotalWon += result.totalPayout;
                 if (result.totalPayout > autoBiggestWin) autoBiggestWin = result.totalPayout;
             } else {
                 autoTotalLost += slotMachine.getBetAmount();
             }
         }
-        int endBalance = slotMachine.getBalance();
+        int endBalance = autoBalance;
         System.out.println("--- Auto-Spin Analytics ---");
-        System.out.printf("Auto-Spins: %d\n", autoSpins);
+        System.out.printf("Auto-Spins: %d\n", autospinCount);
         System.out.printf("Total Won: %d\n", autoTotalWon);
         System.out.printf("Total Lost: %d\n", autoTotalLost);
         System.out.printf("Biggest Win: %d\n", autoBiggestWin);
@@ -311,8 +321,8 @@ public class Main {
         System.out.printf("Ending Balance: %d\n", endBalance);
         int net = endBalance - startBalance;
         System.out.printf("Net Result: %s%d\n", net >= 0 ? "+" : "", net);
-        if (autoSpins > 0) {
-            double rtp = (double) autoTotalWon / (autoSpins * slotMachine.getBetAmount()) * 100.0;
+        if (autospinCount > 0) {
+            double rtp = (double) autoTotalWon / (autospinCount * slotMachine.getBetAmount()) * 100.0;
             System.out.printf("RTP (Return to Player): %.2f%%\n", rtp);
         }
     }
