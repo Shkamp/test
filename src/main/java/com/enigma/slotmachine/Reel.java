@@ -9,26 +9,26 @@ public class Reel {
     private final Random random;
 
     public Reel() {
-        this.random = new Random();
-        this.strip = buildReelStrip();
+        this(new EnumMap<>(Map.of(
+            Symbol.TEN, 15, Symbol.J, 15, Symbol.Q, 15,
+            Symbol.K, 10, Symbol.A, 10,
+            Symbol.P1, 6, Symbol.P2, 6,
+            Symbol.P3, 3, Symbol.P4, 3, Symbol.SCATTER, 2
+        )), 3);
     }
 
     public Reel(Map<Symbol, Integer> symbolDistribution) {
+        this(symbolDistribution, 3);
+    }
+
+    public Reel(Map<Symbol, Integer> symbolDistribution, int minScatterDistance) {
         this.random = new Random();
-        this.strip = buildReelStrip(symbolDistribution);
+        checkScatterFeasibility(symbolDistribution, minScatterDistance);
+        this.strip = buildReelStrip(symbolDistribution, minScatterDistance);
     }
 
     // Build the reel strip with correct symbol counts and scatter spacing
-    private List<Symbol> buildReelStrip() {
-        Map<Symbol, Integer> defaultDist = new EnumMap<>(Symbol.class);
-        defaultDist.put(Symbol.TEN, 15); defaultDist.put(Symbol.J, 15); defaultDist.put(Symbol.Q, 15);
-        defaultDist.put(Symbol.K, 10); defaultDist.put(Symbol.A, 10);
-        defaultDist.put(Symbol.P1, 6); defaultDist.put(Symbol.P2, 6);
-        defaultDist.put(Symbol.P3, 3); defaultDist.put(Symbol.P4, 3); defaultDist.put(Symbol.SCATTER, 2);
-        return buildReelStrip(defaultDist);
-    }
-
-    private List<Symbol> buildReelStrip(Map<Symbol, Integer> symbolDistribution) {
+    private List<Symbol> buildReelStrip(Map<Symbol, Integer> symbolDistribution, int minScatterDistance) {
         List<Symbol> temp = new ArrayList<>();
         for (Map.Entry<Symbol, Integer> entry : symbolDistribution.entrySet()) {
             if (entry.getKey() != Symbol.SCATTER) {
@@ -36,36 +36,8 @@ public class Reel {
             }
         }
         Collections.shuffle(temp, random);
-        placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, 2));
+        placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, 2), minScatterDistance);
         return temp;
-    }
-
-    // Places two scatters at valid, spaced positions in the list
-    private void placeScatters(List<Symbol> temp) {
-        int size = temp.size();
-        int scatter1 = random.nextInt(size - 6) + 3; // avoid edges
-        int scatter2 = (scatter1 + size / 2) % size;
-        if (Math.abs(scatter1 - scatter2) < 3) scatter2 = (scatter2 + 3) % size;
-        temp.add(scatter1, Symbol.SCATTER);
-        temp.add(scatter2 < scatter1 ? scatter2 : scatter2 + 1, Symbol.SCATTER); // adjust for earlier insert
-    }
-
-    // Overload for custom scatter count
-    private void placeScatters(List<Symbol> temp, int scatterCount) {
-        int size = temp.size();
-        if (scatterCount == 2) {
-            int scatter1 = random.nextInt(size - 6) + 3;
-            int scatter2 = (scatter1 + size / 2) % size;
-            if (Math.abs(scatter1 - scatter2) < 3) scatter2 = (scatter2 + 3) % size;
-            temp.add(scatter1, Symbol.SCATTER);
-            temp.add(scatter2 < scatter1 ? scatter2 : scatter2 + 1, Symbol.SCATTER);
-        } else {
-            // Evenly space scatters
-            for (int i = 0; i < scatterCount; i++) {
-                int pos = (i * size) / scatterCount + i;
-                temp.add(Math.min(pos, temp.size()), Symbol.SCATTER);
-            }
-        }
     }
 
     private void addSymbols(List<Symbol> list, Symbol symbol, int count) {
@@ -91,5 +63,44 @@ public class Reel {
      */
     public Symbol[] getFullStrip() {
         return strip.toArray(new Symbol[0]);
+    }
+
+    private void checkScatterFeasibility(Map<Symbol, Integer> symbolDistribution, int minDistance) {
+        int scatterCount = symbolDistribution.getOrDefault(Symbol.SCATTER, 2);
+        int size = 0;
+        for (Map.Entry<Symbol, Integer> entry : symbolDistribution.entrySet()) {
+            if (entry.getKey() != Symbol.SCATTER) size += entry.getValue();
+        }
+        if (scatterCount > 1 && scatterCount * minDistance > size) {
+            throw new IllegalArgumentException("Impossible to place " + scatterCount + " scatters with minimum distance " + minDistance + " on a reel of size " + size);
+        }
+    }
+
+    private void placeScatters(List<Symbol> temp, int scatterCount, int minDistance) {
+        int size = temp.size();
+        if (scatterCount == 0) return;
+        if (scatterCount == 1) {
+            temp.add(random.nextInt(size + 1), Symbol.SCATTER);
+            return;
+        }
+        List<Integer> positions = new ArrayList<>();
+        int start = random.nextInt(size);
+        for (int i = 0; i < scatterCount; i++) {
+            int pos = (start + i * (size / scatterCount)) % size;
+            positions.add(pos);
+        }
+        Collections.sort(positions);
+        for (int i = 0; i < positions.size(); i++) {
+            int next = positions.get((i + 1) % positions.size());
+            int curr = positions.get(i);
+            int dist = (next - curr + size) % size;
+            if (dist < minDistance) {
+                throw new IllegalArgumentException("Cannot place " + scatterCount + " scatters with minimum distance " + minDistance + " on a reel of size " + size);
+            }
+        }
+        for (int i = 0; i < positions.size(); i++) {
+            int pos = positions.get(i) + i; // adjust for previous inserts
+            temp.add(pos, Symbol.SCATTER);
+        }
     }
 }
