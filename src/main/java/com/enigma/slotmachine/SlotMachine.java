@@ -1,7 +1,9 @@
-// SlotMachine.java
-// Main game logic for the slot machine
 package com.enigma.slotmachine;
 
+/**
+ * Main game logic for the slot machine.
+ * Handles reels, paylines, symbol distribution, spins, payouts, and configuration.
+ */
 public class SlotMachine {
     private static final int REELS = 5;
     private static final int ROWS = 3;
@@ -18,6 +20,11 @@ public class SlotMachine {
     private static final int[] BET_OPTIONS = {1, 2, 5, 10};
     private final boolean payAllWins;
 
+    /**
+     * Constructs a SlotMachine with a starting balance and payout mode.
+     * @param startingBalance Initial player balance
+     * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
+     */
     public SlotMachine(int startingBalance, boolean payAllWins) {
         this.balance = startingBalance;
         this.payAllWins = payAllWins;
@@ -26,35 +33,66 @@ public class SlotMachine {
             slotReels[i] = new Reel();
         }
     }
+    /**
+     * Constructs a SlotMachine with a starting balance, defaulting to pay all wins.
+     * @param startingBalance Initial player balance
+     */
     public SlotMachine(int startingBalance) {
         this(startingBalance, true);
     }
 
+    /**
+     * Returns the current balance.
+     * @return Player balance
+     */
     public int getBalance() {
         return balance;
     }
 
+    /**
+     * Adds to the current balance.
+     * @param amount Amount to add
+     */
     public void addBalance(int amount) {
         balance += amount;
     }
 
+    /**
+     * Deducts from the current balance.
+     * @param amount Amount to deduct
+     */
     public void deductBalance(int amount) {
         balance -= amount;
     }
 
+    /**
+     * Returns the current bet amount.
+     * @return Bet amount
+     */
     public int getBetAmount() {
         return betAmount;
     }
 
+    /**
+     * Sets the bet amount.
+     * @param betAmount New bet amount
+     */
     public void setBetAmount(int betAmount) {
         this.betAmount = betAmount;
     }
 
+    /**
+     * Returns the available bet options.
+     * @return Array of bet options
+     */
     public int[] getBetOptions() {
         return BET_OPTIONS;
     }
 
-    // Spins the reels and returns the resulting grid
+    /**
+     * Spins the reels and returns the resulting grid.
+     * @return 3x5 grid of symbols
+     */
     public Symbol[][] spin() {
         Symbol[][] grid = new Symbol[ROWS][REELS];
         for (int col = 0; col < REELS; col++) {
@@ -66,7 +104,11 @@ public class SlotMachine {
         return grid;
     }
 
-    // Returns the number of scatter symbols in the grid
+    /**
+     * Counts the number of scatter symbols in the grid.
+     * @param grid The symbol grid
+     * @return Number of scatters
+     */
     public int countScatters(Symbol[][] grid) {
         int scatterCount = 0;
         for (int row = 0; row < ROWS; row++) {
@@ -77,7 +119,11 @@ public class SlotMachine {
         return scatterCount;
     }
 
-    // Checks paylines and scatter wins, returns total payout (scatter payout included)
+    /**
+     * Calculates the total payout for a grid, including line and scatter wins.
+     * @param grid The symbol grid
+     * @return Total payout
+     */
     public int calculatePayout(Symbol[][] grid) {
         int totalPayout = 0;
         // Check paylines for 3, 4, 5 consecutive matches
@@ -104,7 +150,11 @@ public class SlotMachine {
         return totalPayout * betAmount;
     }
 
-    // Returns a string representation of the grid
+    /**
+     * Returns a string representation of the grid.
+     * @param grid The symbol grid
+     * @return String representation
+     */
     public String gridToString(Symbol[][] grid) {
         StringBuilder sb = new StringBuilder();
         for (int row = 0; row < ROWS; row++) {
@@ -116,7 +166,10 @@ public class SlotMachine {
         return sb.toString();
     }
 
-    // Returns a string representation of the payout table
+    /**
+     * Returns a string representation of the payout table.
+     * @return String representation
+     */
     public String payoutTableToString() {
         StringBuilder sb = new StringBuilder();
         sb.append("--- Payout Table ---\n");
@@ -130,14 +183,24 @@ public class SlotMachine {
     }
 
     // Print methods for backward compatibility
+    /**
+     * Prints the grid to the console.
+     * @param grid The symbol grid
+     */
     public void printGrid(Symbol[][] grid) {
         System.out.println("\n" + gridToString(grid));
     }
 
+    /**
+     * Prints the payout table to the console.
+     */
     public void printPayoutTable() {
         System.out.println(payoutTableToString());
     }
 
+    /**
+     * Data class representing the result of a spin, including grid, wins, and payout.
+     */
     public static class SpinResult {
         public final Symbol[][] grid;
         public final java.util.List<LineWin> lineWins;
@@ -154,6 +217,9 @@ public class SlotMachine {
         }
     }
 
+    /**
+     * Data class representing a single line win (payline, symbol, count, payout).
+     */
     public static class LineWin {
         public final int lineIndex;
         public final Symbol symbol;
@@ -167,6 +233,10 @@ public class SlotMachine {
         }
     }
 
+    /**
+     * Spins the reels and evaluates all wins, returning detailed results.
+     * @return SpinResult containing grid, line wins, scatter info, and total payout
+     */
     public SpinResult spinAndEvaluate() {
         Symbol[][] grid = spin();
         java.util.List<LineWin> lineWins = new java.util.ArrayList<>();

@@ -95,4 +95,54 @@ class SlotMachineTest {
         // 5 in a row for K: payout should be 8
         assertTrue(payout >= 8);
     }
+
+    @Test
+    void testMinimumBalanceNoSpin() {
+        SlotMachine sm = new SlotMachine(1);
+        sm.deductBalance(1);
+        assertTrue(sm.getBalance() < sm.getBetAmount() || sm.getBalance() == 0);
+    }
+
+    @Test
+    void testMaximumBalance() {
+        SlotMachine sm = new SlotMachine(Integer.MAX_VALUE - 10);
+        sm.addBalance(10);
+        assertEquals(Integer.MAX_VALUE, sm.getBalance());
+    }
+
+    @Test
+    void testBetChangeDuringFreeSpins() {
+        SlotMachine sm = new SlotMachine(100);
+        sm.setBetAmount(5);
+        int oldBet = sm.getBetAmount();
+        sm.setBetAmount(2); // Change bet during free spins
+        assertEquals(5, oldBet);
+        assertEquals(2, sm.getBetAmount());
+    }
+
+    @Test
+    void testMultipleSimultaneousWins() {
+        SlotMachine sm = new SlotMachine(100, true);
+        // Both top and middle row win with Q
+        Symbol[][] grid = new Symbol[][] {
+            {Symbol.Q, Symbol.Q, Symbol.Q, Symbol.Q, Symbol.Q},
+            {Symbol.Q, Symbol.Q, Symbol.Q, Symbol.Q, Symbol.Q},
+            {Symbol.P1, Symbol.P2, Symbol.P3, Symbol.P4, Symbol.K}
+        };
+        int payout = sm.calculatePayout(grid);
+        assertTrue(payout >= 8); // Both lines should pay
+    }
+
+    @Test
+    void testScatterSpacingOnReel() {
+        Reel reel = new Reel();
+        Symbol[] symbols = reel.getFullStrip();
+        for (int i = 0; i < symbols.length; i++) {
+            int scatterCount = 0;
+            for (int j = 0; j < 3; j++) {
+                if (symbols[(i + j) % symbols.length] == Symbol.SCATTER) scatterCount++;
+            }
+            assertTrue(scatterCount <= 1, "No window of 3 symbols should have more than one scatter");
+        }
+    }
 }

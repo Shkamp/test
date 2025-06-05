@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
+/**
+ * Main entry point for the Java console slot machine game.
+ * Handles user interaction, menu, and game loop.
+ */
 public class Main {
     private static final String[] PAYLINE_NAMES = {
         "Middle Row",
@@ -15,6 +19,10 @@ public class Main {
         "Inverted V-Shape"
     };
 
+    /**
+     * The main method to start the slot machine game.
+     * @param args Command line arguments (not used)
+     */
     public static void main(String[] args) {
         boolean payAllWins = true;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
@@ -57,6 +65,11 @@ public class Main {
         }
     }
 
+    /**
+     * Prints the main menu, including balance, bet, and free spins.
+     * @param slotMachine The slot machine instance
+     * @param freeSpins Number of free spins left
+     */
     private static void printMenu(SlotMachine slotMachine, int freeSpins) {
         if (freeSpins > 0) {
             System.out.printf("%nBalance: %d (Free Spins left: %d)%n", slotMachine.getBalance(), freeSpins);
@@ -71,6 +84,14 @@ public class Main {
         System.out.println("Choose an option: ");
     }
 
+    /**
+     * Handles a spin, including deducting balance, evaluating wins, and displaying results.
+     * @param slotMachine The slot machine instance
+     * @param freeSpins Number of free spins left
+     * @param reader BufferedReader for user input
+     * @return Updated free spins count
+     * @throws IOException If an input or output exception occurred
+     */
     private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader) throws IOException {
         if (freeSpins == 0 && slotMachine.getBalance() < slotMachine.getBetAmount()) {
             System.out.println("Not enough balance to spin. Each spin costs " + slotMachine.getBetAmount() + ".");
@@ -96,6 +117,11 @@ public class Main {
         return freeSpins;
     }
 
+    /**
+     * Prints the slot grid, highlighting winning lines and scatters.
+     * @param grid The slot grid
+     * @param lineWins List of winning lines
+     */
     private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins) {
         boolean[][] highlight = new boolean[grid.length][grid[0].length];
         for (SlotMachine.LineWin win : lineWins) {
@@ -119,6 +145,11 @@ public class Main {
         }
     }
 
+    /**
+     * Returns the payline definition by index.
+     * @param index The payline index
+     * @return The payline array
+     */
     private static int[] getPayline(int index) {
         int[][] PAYLINES = {
             {1, 1, 1, 1, 1}, // Middle row
@@ -130,6 +161,10 @@ public class Main {
         return PAYLINES[index];
     }
 
+    /**
+     * Prints a summary of the spin, including all line and scatter wins.
+     * @param result The result of the spin
+     */
     private static void printSpinSummary(SlotMachine.SpinResult result) {
         if (!result.lineWins.isEmpty()) {
             for (SlotMachine.LineWin win : result.lineWins) {
@@ -145,6 +180,12 @@ public class Main {
         }
     }
 
+    /**
+     * Allows the user to change the bet amount interactively.
+     * @param reader BufferedReader for user input
+     * @param slotMachine The slot machine instance
+     * @throws IOException If an input or output exception occurred
+     */
     private static void changeBetAmount(BufferedReader reader, SlotMachine slotMachine) throws IOException {
         int[] options = slotMachine.getBetOptions();
         System.out.println("Choose your bet amount:");

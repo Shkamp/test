@@ -65,4 +65,11 @@ public class Reel {
         if (scatterCount > 1) return spin(); // re-spin if more than one scatter
         return window;
     }
+
+    /**
+     * Returns the full reel strip as an array (for testing scatter spacing).
+     */
+    public Symbol[] getFullStrip() {
+        return strip.toArray(new Symbol[0]);
+    }
 }
