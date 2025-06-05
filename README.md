@@ -24,6 +24,9 @@ See `slotmachine.properties` for all options:
 
 The `minScatterDistance` property in `slotmachine.properties` controls the minimum number of positions between any two scatter symbols on a reel. This prevents clusters of scatters and ensures fair, random distribution. If the requested number of scatters and minimum distance cannot fit on a reel, the game will throw a configuration error at startup. This logic is enforced in code and tested in the unit tests for reliability and game balance.
 
+## Scatter Spacing Constraint
+- The game enforces a minimum distance between Scatter symbols on each reel, ensuring that no spin can show more than one Scatter in the visible 3-symbol window of a reel. This is achieved by spacing out Scatters during reel construction, and is configurable via `minScatterDistance` in `slotmachine.properties`. This constraint is critical for fair gameplay and is strictly enforced in both code and tests.
+
 ## Running & Building
 - **Build**: `gradle build`
 - **Run**: `gradle run` or run `Main` in your IDE

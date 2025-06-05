@@ -118,6 +118,14 @@ public class SlotMachine {
     }
 
     /**
+     * Returns the current paylines as a 2D array.
+     * @return Paylines array
+     */
+    public int[][] getPaylines() {
+        return paylines;
+    }
+
+    /**
      * Spins the reels and returns the resulting grid.
      * @return 3x5 grid of symbols
      */

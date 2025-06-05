@@ -90,16 +90,19 @@ public class Main {
                         slotMachine.printPayoutTable();
                         break;
                     case "3":
-                        running = false;
-                        stats.endingBalance = slotMachine.getBalance();
-                        printSessionSummary(stats);
-                        System.out.println("Thanks for playing!");
+                        printPaylines(slotMachine);
                         break;
                     case "4":
                         changeBetAmount(reader, slotMachine);
                         break;
                     case "5":
                         runAutoSpins(slotMachine, stats, reader, autospinCount);
+                        break;
+                    case "6":
+                        running = false;
+                        stats.endingBalance = slotMachine.getBalance();
+                        printSessionSummary(stats);
+                        System.out.println("Thanks for playing!");
                         break;
                     default:
                         System.out.println("Invalid option. Try again.");
@@ -124,9 +127,10 @@ public class Main {
         System.out.printf("Current Bet: %d%n", slotMachine.getBetAmount());
         System.out.println("1. Spin");
         System.out.println("2. View Payout Table");
-        System.out.println("3. Exit");
+        System.out.println("3. View Paylines");
         System.out.println("4. Change Bet Amount");
         System.out.printf("5. Run %d Auto-Spins (Analytics)\n", autospinCount);
+        System.out.println("6. Exit");
         System.out.println("Choose an option: ");
     }
 
@@ -153,7 +157,7 @@ public class Main {
         } else freeSpins--;
         SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
         System.out.println("\n--- Spin Result ---");
-        printHighlightedGrid(result.grid, result.lineWins);
+        printHighlightedGrid(result.grid, result.lineWins, slotMachine.getPaylines());
         printSpinSummary(result);
         if (result.totalPayout > 0) {
             System.out.printf("You win: %d!%n", result.totalPayout);
@@ -172,16 +176,32 @@ public class Main {
     }
 
     /**
+     * Prints the paylines in a readable format.
+     * @param slotMachine The slot machine instance
+     */
+    private static void printPaylines(SlotMachine slotMachine) {
+        int[][] paylines = slotMachine.getPaylines();
+        System.out.println("--- Paylines ---");
+        for (int i = 0; i < paylines.length; i++) {
+            System.out.printf("Line %d: %s\n", i + 1, java.util.Arrays.toString(paylines[i]));
+        }
+        System.out.println();
+    }
+
+    /**
      * Prints the slot grid, highlighting winning lines and scatters.
      * @param grid The slot grid
      * @param lineWins List of winning lines
+     * @param paylines The current paylines (dynamic)
      */
-    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins) {
+    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins, int[][] paylines) {
         boolean[][] highlight = new boolean[grid.length][grid[0].length];
         for (SlotMachine.LineWin win : lineWins) {
-            int[] payline = getPayline(win.lineIndex - 1);
-            for (int col = 0; col < win.count; col++) {
-                highlight[payline[col]][col] = true;
+            int[] payline = (win.lineIndex - 1 < paylines.length && win.lineIndex - 1 >= 0) ? paylines[win.lineIndex - 1] : null;
+            if (payline != null) {
+                for (int col = 0; col < win.count && col < payline.length; col++) {
+                    highlight[payline[col]][col] = true;
+                }
             }
         }
         for (int row = 0; row < grid.length; row++) {
@@ -197,25 +217,6 @@ public class Main {
             }
             System.out.println();
         }
-    }
-
-    /**
-     * Returns the payline definition by index.
-     * @param index The payline index
-     * @return The payline array
-     */
-    private static int[] getPayline(int index) {
-        // Use dynamic paylines from slotMachine if possible
-        // This method is only used for highlighting, so we can fetch from the current slotMachine instance
-        // For now, fallback to the default if not available
-        int[][] PAYLINES = {
-            {1, 1, 1, 1, 1}, // Middle row
-            {0, 0, 0, 0, 0}, // Top row
-            {2, 2, 2, 2, 2}, // Bottom row
-            {0, 1, 2, 1, 0}, // V shape
-            {2, 1, 0, 1, 2}  // Inverted V
-        };
-        return PAYLINES[index];
     }
 
     /**
@@ -311,19 +312,13 @@ public class Main {
                 autoTotalLost += slotMachine.getBetAmount();
             }
         }
-        int endBalance = autoBalance;
-        System.out.println("--- Auto-Spin Analytics ---");
-        System.out.printf("Auto-Spins: %d\n", autospinCount);
-        System.out.printf("Total Won: %d\n", autoTotalWon);
-        System.out.printf("Total Lost: %d\n", autoTotalLost);
-        System.out.printf("Biggest Win: %d\n", autoBiggestWin);
-        System.out.printf("Starting Balance: %d\n", startBalance);
-        System.out.printf("Ending Balance: %d\n", endBalance);
-        int net = endBalance - startBalance;
-        System.out.printf("Net Result: %s%d\n", net >= 0 ? "+" : "", net);
-        if (autospinCount > 0) {
-            double rtp = (double) autoTotalWon / (autospinCount * slotMachine.getBetAmount()) * 100.0;
-            System.out.printf("RTP (Return to Player): %.2f%%\n", rtp);
+        stats.totalWon += autoTotalWon;
+        stats.totalLost += autoTotalLost;
+        if (autoTotalWon > 0) {
+            System.out.printf("Auto-spin session won: %d (Biggest win: %d)%n", autoTotalWon, autoBiggestWin);
+        } else {
+            System.out.println("Auto-spin session finished with no wins.");
         }
+        System.out.printf("Ending balance after auto-spins: %d%n", autoBalance);
     }
 }
