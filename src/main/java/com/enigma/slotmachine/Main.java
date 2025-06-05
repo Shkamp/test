@@ -9,16 +9,18 @@ import java.util.Properties;
 /**
  * Main entry point for the Java console slot machine game.
  * <p>
- * Handles user interaction, menu, and game loop. Reads configuration from slotmachine.properties.
- * Provides a console interface for spinning, viewing payouts, and changing bets.
+ * Handles user interaction, menu, and game loop. Reads configuration from
+ * slotmachine.properties.
+ * Provides a console interface for spinning, viewing payouts, and changing
+ * bets.
  */
 public class Main {
     private static final String[] PAYLINE_NAMES = {
-        "Middle Row",
-        "Top Row",
-        "Bottom Row",
-        "V-Shape",
-        "Inverted V-Shape"
+            "Middle Row",
+            "Top Row",
+            "Bottom Row",
+            "V-Shape",
+            "Inverted V-Shape"
     };
 
     /**
@@ -35,6 +37,7 @@ public class Main {
 
     /**
      * The main method to start the slot machine game.
+     * 
      * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
@@ -47,7 +50,8 @@ public class Main {
             Properties config = new Properties();
             config.load(configStream);
             String payAll = config.getProperty("payAllWins");
-            if (payAll != null) payAllWins = Boolean.parseBoolean(payAll);
+            if (payAll != null)
+                payAllWins = Boolean.parseBoolean(payAll);
             symbolConfig = config.getProperty("symbols");
             paylinesConfig = config.getProperty("paylines");
             String minScatterDistanceStr = config.getProperty("minScatterDistance");
@@ -69,7 +73,8 @@ public class Main {
             }
             slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance);
         } catch (IOException e) {
-            System.out.println("Config file not found or unreadable, using default payout mode (pay all wins). Using default scatter distance.");
+            System.out.println(
+                    "Config file not found or unreadable, using default payout mode (pay all wins). Using default scatter distance.");
             slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, 3);
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -115,8 +120,9 @@ public class Main {
 
     /**
      * Prints the main menu, including balance, bet, and free spins.
+     * 
      * @param slotMachine The slot machine instance
-     * @param freeSpins Number of free spins left
+     * @param freeSpins   Number of free spins left
      */
     private static void printMenu(SlotMachine slotMachine, int freeSpins, int autospinCount) {
         if (freeSpins > 0) {
@@ -135,15 +141,18 @@ public class Main {
     }
 
     /**
-     * Handles a spin, including deducting balance, evaluating wins, and displaying results.
+     * Handles a spin, including deducting balance, evaluating wins, and displaying
+     * results.
+     * 
      * @param slotMachine The slot machine instance
-     * @param freeSpins Number of free spins left
-     * @param reader BufferedReader for user input
-     * @param stats Session statistics
+     * @param freeSpins   Number of free spins left
+     * @param reader      BufferedReader for user input
+     * @param stats       Session statistics
      * @return Updated free spins count
      * @throws IOException If an input or output exception occurred
      */
-    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats) throws IOException {
+    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats)
+            throws IOException {
         if (freeSpins == 0 && slotMachine.getBalance() < slotMachine.getBetAmount()) {
             System.out.println("Not enough balance to spin. Each spin costs " + slotMachine.getBetAmount() + ".");
             return freeSpins;
@@ -154,7 +163,8 @@ public class Main {
         } else if (freeSpins > 0) {
             System.out.println("Using free spin...");
             stats.totalSpins++;
-        } else freeSpins--;
+        } else
+            freeSpins--;
         SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
         System.out.println("\n--- Spin Result ---");
         printHighlightedGrid(result.grid, result.lineWins, slotMachine.getPaylines());
@@ -163,7 +173,8 @@ public class Main {
             System.out.printf("You win: %d!%n", result.totalPayout);
             slotMachine.addBalance(result.totalPayout);
             stats.totalWon += result.totalPayout;
-            if (result.totalPayout > stats.biggestWin) stats.biggestWin = result.totalPayout;
+            if (result.totalPayout > stats.biggestWin)
+                stats.biggestWin = result.totalPayout;
         } else {
             stats.totalLost += slotMachine.getBetAmount();
             System.out.println("No win this time.");
@@ -177,6 +188,7 @@ public class Main {
 
     /**
      * Prints the paylines in a readable format.
+     * 
      * @param slotMachine The slot machine instance
      */
     private static void printPaylines(SlotMachine slotMachine) {
@@ -189,44 +201,69 @@ public class Main {
     }
 
     /**
-     * Prints the slot grid, highlighting winning lines and scatters.
-     * @param grid The slot grid
+     * Returns a boolean highlight matrix for the given grid, line wins, and
+     * paylines.
+     * This is extracted from the printHighlightedGrid logic for testability.
+     * 
+     * @param grid     The slot grid
      * @param lineWins List of winning lines
      * @param paylines The current paylines (dynamic)
      */
-    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins, int[][] paylines) {
+    public static boolean[][] getHighlightMatrix(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins,
+            int[][] paylines) {
         boolean[][] highlight = new boolean[grid.length][grid[0].length];
         for (SlotMachine.LineWin win : lineWins) {
-            int[] payline = (win.lineIndex - 1 < paylines.length && win.lineIndex - 1 >= 0) ? paylines[win.lineIndex - 1] : null;
+            int[] payline = (win.lineIndex - 1 < paylines.length && win.lineIndex - 1 >= 0)
+                    ? paylines[win.lineIndex - 1]
+                    : null;
             if (payline != null) {
-                for (int col = 0; col < win.count && col < payline.length; col++) {
+                // Defensive: ensure win.count does not exceed number of reels/columns
+                int maxCols = Math.min(win.count, grid[0].length);
+                for (int col = 0; col < maxCols && col < payline.length; col++) {
                     highlight[payline[col]][col] = true;
                 }
             }
         }
+        return highlight;
+    }
+
+    /**
+     * Prints the slot grid, highlighting winning lines and scatters.
+     * 
+     * @param grid     The slot grid
+     * @param lineWins List of winning lines
+     * @param paylines The current paylines (dynamic)
+     */
+    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins,
+            int[][] paylines) {
+        boolean[][] highlight = getHighlightMatrix(grid, lineWins, paylines);
         for (int row = 0; row < grid.length; row++) {
+            StringBuilder sb = new StringBuilder();
             for (int col = 0; col < grid[0].length; col++) {
                 String symbol = grid[row][col].getName();
                 if (highlight[row][col]) {
-                    System.out.print("*" + symbol + "* ");
+                    sb.append("*" + symbol + "* ");
                 } else if (grid[row][col] == Symbol.SCATTER) {
-                    System.out.print("#" + symbol + "# ");
+                    sb.append("#" + symbol + "# ");
                 } else {
-                    System.out.print(symbol + "  ");
+                    sb.append(symbol + "  ");
                 }
             }
-            System.out.println();
+            System.out.println(sb.toString());
         }
     }
 
     /**
      * Prints a summary of the spin, including all line and scatter wins.
+     * 
      * @param result The result of the spin
      */
     private static void printSpinSummary(SlotMachine.SpinResult result) {
         if (!result.lineWins.isEmpty()) {
             for (SlotMachine.LineWin win : result.lineWins) {
-                String lineName = win.lineIndex >= 1 && win.lineIndex <= PAYLINE_NAMES.length ? PAYLINE_NAMES[win.lineIndex - 1] : ("Line " + win.lineIndex);
+                String lineName = win.lineIndex >= 1 && win.lineIndex <= PAYLINE_NAMES.length
+                        ? PAYLINE_NAMES[win.lineIndex - 1]
+                        : ("Line " + win.lineIndex);
                 System.out.printf("%s: %dx %s, pays %d%n", lineName, win.count, win.symbol.getName(), win.payout);
             }
         }
@@ -240,7 +277,8 @@ public class Main {
 
     /**
      * Allows the user to change the bet amount interactively.
-     * @param reader BufferedReader for user input
+     * 
+     * @param reader      BufferedReader for user input
      * @param slotMachine The slot machine instance
      * @throws IOException If an input or output exception occurred
      */
@@ -285,7 +323,7 @@ public class Main {
         }
     }
 
-    /**
+/**
      * Runs a predefined number of auto-spins for analytics.
      * @param slotMachine The slot machine instance
      * @param stats Session statistics
