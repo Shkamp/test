@@ -16,13 +16,18 @@ public class SlotMachine {
     private int balance;
     private int betAmount = 1;
     private static final int[] BET_OPTIONS = {1, 2, 5, 10};
+    private final boolean payAllWins;
 
-    public SlotMachine(int startingBalance) {
+    public SlotMachine(int startingBalance, boolean payAllWins) {
         this.balance = startingBalance;
+        this.payAllWins = payAllWins;
         slotReels = new Reel[REELS];
         for (int i = 0; i < REELS; i++) {
             slotReels[i] = new Reel();
         }
+    }
+    public SlotMachine(int startingBalance) {
+        this(startingBalance, true);
     }
 
     public int getBalance() {
@@ -131,5 +136,77 @@ public class SlotMachine {
 
     public void printPayoutTable() {
         System.out.println(payoutTableToString());
+    }
+
+    public static class SpinResult {
+        public final Symbol[][] grid;
+        public final java.util.List<LineWin> lineWins;
+        public final int scatterCount;
+        public final int scatterPayout;
+        public final int totalPayout;
+
+        public SpinResult(Symbol[][] grid, java.util.List<LineWin> lineWins, int scatterCount, int scatterPayout, int totalPayout) {
+            this.grid = grid;
+            this.lineWins = lineWins;
+            this.scatterCount = scatterCount;
+            this.scatterPayout = scatterPayout;
+            this.totalPayout = totalPayout;
+        }
+    }
+
+    public static class LineWin {
+        public final int lineIndex;
+        public final Symbol symbol;
+        public final int count;
+        public final int payout;
+        public LineWin(int lineIndex, Symbol symbol, int count, int payout) {
+            this.lineIndex = lineIndex;
+            this.symbol = symbol;
+            this.count = count;
+            this.payout = payout;
+        }
+    }
+
+    public SpinResult spinAndEvaluate() {
+        Symbol[][] grid = spin();
+        java.util.List<LineWin> lineWins = new java.util.ArrayList<>();
+        int totalPayout = 0;
+        LineWin highest = null;
+        // Check paylines for 3, 4, 5 consecutive matches
+        for (int i = 0; i < PAYLINES.length; i++) {
+            int[] payline = PAYLINES[i];
+            Symbol first = grid[payline[0]][0];
+            if (first == Symbol.SCATTER) continue;
+            int match = 1;
+            for (int col = 1; col < REELS; col++) {
+                if (grid[payline[col]][col] == first) {
+                    match++;
+                } else {
+                    break;
+                }
+            }
+            if (match >= 3) {
+                int payout = first.getPayout(match) * betAmount;
+                LineWin win = new LineWin(i + 1, first, match, payout);
+                if (payAllWins) {
+                    lineWins.add(win);
+                    totalPayout += payout;
+                } else {
+                    if (highest == null || payout > highest.payout) highest = win;
+                }
+            }
+        }
+        if (!payAllWins && highest != null) {
+            lineWins.add(highest);
+            totalPayout += highest.payout;
+        }
+        // Scatter payout (anywhere on grid)
+        int scatterCount = countScatters(grid);
+        int scatterPayout = 0;
+        if (scatterCount >= 3) {
+            scatterPayout = Symbol.SCATTER.getPayout(Math.min(scatterCount, 5)) * betAmount;
+            totalPayout += scatterPayout;
+        }
+        return new SpinResult(grid, lineWins, scatterCount, scatterPayout, totalPayout);
     }
 }

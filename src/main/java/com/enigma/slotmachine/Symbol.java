@@ -12,7 +12,7 @@ public enum Symbol {
     P2("P2", new int[]{4, 8, 16}),
     P3("P3", new int[]{8, 16, 32}),
     P4("P4", new int[]{8, 16, 32}),
-    SCATTER("Scatter", new int[]{2, 5, 20});
+    SCATTER("S", new int[]{2, 5, 20});
 
     private final String name;
     private final int[] payouts; // payouts[0]=3, [1]=4, [2]=5
