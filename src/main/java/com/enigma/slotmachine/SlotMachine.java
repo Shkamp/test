@@ -1,5 +1,8 @@
 package com.enigma.slotmachine;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 /**
  * Main game logic for the slot machine.
  * <p>

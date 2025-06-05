@@ -1,5 +1,11 @@
 package com.enigma.slotmachine;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Properties;
+
 /**
  * Main entry point for the Java console slot machine game.
  * <p>
@@ -14,6 +20,18 @@ public class Main {
         "V-Shape",
         "Inverted V-Shape"
     };
+
+    /**
+     * Tracks session statistics for summary and analytics.
+     */
+    private static class SessionStats {
+        int totalSpins = 0;
+        int totalWon = 0;
+        int totalLost = 0;
+        int biggestWin = 0;
+        int startingBalance = 0;
+        int endingBalance = 0;
+    }
 
     /**
      * The main method to start the slot machine game.
@@ -49,23 +67,30 @@ public class Main {
         int freeSpins = 0;
         System.out.println("Welcome to the Java Slot Machine!");
         boolean running = true;
+        SessionStats stats = new SessionStats();
+        stats.startingBalance = 100;
         try {
             while (running) {
                 printMenu(slotMachine, freeSpins);
                 String input = reader.readLine();
                 switch (input) {
                     case "1":
-                        freeSpins = handleSpin(slotMachine, freeSpins, reader);
+                        freeSpins = handleSpin(slotMachine, freeSpins, reader, stats);
                         break;
                     case "2":
                         slotMachine.printPayoutTable();
                         break;
                     case "3":
                         running = false;
+                        stats.endingBalance = slotMachine.getBalance();
+                        printSessionSummary(stats);
                         System.out.println("Thanks for playing!");
                         break;
                     case "4":
                         changeBetAmount(reader, slotMachine);
+                        break;
+                    case "5":
+                        runAutoSpins(slotMachine, stats, reader);
                         break;
                     default:
                         System.out.println("Invalid option. Try again.");
@@ -92,6 +117,7 @@ public class Main {
         System.out.println("2. View Payout Table");
         System.out.println("3. Exit");
         System.out.println("4. Change Bet Amount");
+        System.out.println("5. Run 1000 Auto-Spins (Analytics)");
         System.out.println("Choose an option: ");
     }
 
@@ -100,17 +126,22 @@ public class Main {
      * @param slotMachine The slot machine instance
      * @param freeSpins Number of free spins left
      * @param reader BufferedReader for user input
+     * @param stats Session statistics
      * @return Updated free spins count
      * @throws IOException If an input or output exception occurred
      */
-    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader) throws IOException {
+    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats) throws IOException {
         if (freeSpins == 0 && slotMachine.getBalance() < slotMachine.getBetAmount()) {
             System.out.println("Not enough balance to spin. Each spin costs " + slotMachine.getBetAmount() + ".");
             return freeSpins;
         }
-        if (freeSpins == 0) slotMachine.deductBalance(slotMachine.getBetAmount());
-        else if (freeSpins > 0) System.out.println("Using free spin...");
-        else freeSpins--;
+        if (freeSpins == 0) {
+            slotMachine.deductBalance(slotMachine.getBetAmount());
+            stats.totalSpins++;
+        } else if (freeSpins > 0) {
+            System.out.println("Using free spin...");
+            stats.totalSpins++;
+        } else freeSpins--;
         SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
         System.out.println("\n--- Spin Result ---");
         printHighlightedGrid(result.grid, result.lineWins);
@@ -118,7 +149,10 @@ public class Main {
         if (result.totalPayout > 0) {
             System.out.printf("You win: %d!%n", result.totalPayout);
             slotMachine.addBalance(result.totalPayout);
+            stats.totalWon += result.totalPayout;
+            if (result.totalPayout > stats.biggestWin) stats.biggestWin = result.totalPayout;
         } else {
+            stats.totalLost += slotMachine.getBetAmount();
             System.out.println("No win this time.");
         }
         if (result.scatterCount >= 3) {
@@ -218,6 +252,68 @@ public class Main {
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid input. Please enter a number.");
+        }
+    }
+
+    /**
+     * Prints the session summary at the end of the game.
+     * @param stats The session statistics
+     */
+    private static void printSessionSummary(SessionStats stats) {
+        System.out.println("\n--- Session Summary ---");
+        System.out.printf("Total Spins: %d\n", stats.totalSpins);
+        System.out.printf("Total Won: %d\n", stats.totalWon);
+        System.out.printf("Total Lost: %d\n", stats.totalLost);
+        System.out.printf("Biggest Win: %d\n", stats.biggestWin);
+        System.out.printf("Starting Balance: %d\n", stats.startingBalance);
+        System.out.printf("Ending Balance: %d\n", stats.endingBalance);
+        int net = stats.endingBalance - stats.startingBalance;
+        System.out.printf("Net Result: %s%d\n", net >= 0 ? "+" : "", net);
+        if (stats.totalSpins > 0) {
+            double rtp = (double) stats.totalWon / (stats.totalSpins * stats.startingBalance) * 100.0;
+            System.out.printf("RTP (Return to Player): %.2f%%\n", rtp);
+        }
+    }
+
+    /**
+     * Runs a predefined number of auto-spins for analytics.
+     * @param slotMachine The slot machine instance
+     * @param stats Session statistics
+     * @param reader BufferedReader for user input
+     * @throws IOException If an input or output exception occurred
+     */
+    private static void runAutoSpins(SlotMachine slotMachine, SessionStats stats, BufferedReader reader) throws IOException {
+        System.out.println("Running 1000 auto-spins...");
+        int autoSpins = 1000;
+        int autoTotalWon = 0;
+        int autoBiggestWin = 0;
+        int autoTotalLost = 0;
+        int startBalance = slotMachine.getBalance();
+        for (int i = 0; i < autoSpins; i++) {
+            if (slotMachine.getBalance() < slotMachine.getBetAmount()) break;
+            slotMachine.deductBalance(slotMachine.getBetAmount());
+            SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
+            if (result.totalPayout > 0) {
+                slotMachine.addBalance(result.totalPayout);
+                autoTotalWon += result.totalPayout;
+                if (result.totalPayout > autoBiggestWin) autoBiggestWin = result.totalPayout;
+            } else {
+                autoTotalLost += slotMachine.getBetAmount();
+            }
+        }
+        int endBalance = slotMachine.getBalance();
+        System.out.println("--- Auto-Spin Analytics ---");
+        System.out.printf("Auto-Spins: %d\n", autoSpins);
+        System.out.printf("Total Won: %d\n", autoTotalWon);
+        System.out.printf("Total Lost: %d\n", autoTotalLost);
+        System.out.printf("Biggest Win: %d\n", autoBiggestWin);
+        System.out.printf("Starting Balance: %d\n", startBalance);
+        System.out.printf("Ending Balance: %d\n", endBalance);
+        int net = endBalance - startBalance;
+        System.out.printf("Net Result: %s%d\n", net >= 0 ? "+" : "", net);
+        if (autoSpins > 0) {
+            double rtp = (double) autoTotalWon / (autoSpins * slotMachine.getBetAmount()) * 100.0;
+            System.out.printf("RTP (Return to Player): %.2f%%\n", rtp);
         }
     }
 }

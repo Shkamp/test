@@ -83,6 +83,15 @@ public class Reel {
         }
     }
 
+    /**
+     * Places scatter symbols on the reel strip with a minimum distance between them.
+     * <p>
+     * This method ensures that no two scatters are placed closer than the configured minimum distance (minScatterDistance),
+     * which prevents clusters of scatters and enforces fair distribution. The algorithm first checks if the requested
+     * number of scatters and minimum distance is feasible for the reel size. It then calculates evenly spaced positions
+     * for scatters, checks the circular (wrap-around) distance between them, and throws an exception if the constraint
+     * cannot be satisfied. This logic is critical for game balance and is tested in SlotMachineTest.
+     */
     private void placeScatters(List<Symbol> temp, int scatterCount, int minDistance) {
         int size = temp.size();
         if (scatterCount == 0) return;

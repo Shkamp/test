@@ -20,6 +20,10 @@ See `slotmachine.properties` for all options:
 - `paylines`: Payline definitions
 - `minScatterDistance`: Minimum distance between scatters on a reel
 
+### Scatter Spacing Logic
+
+The `minScatterDistance` property in `slotmachine.properties` controls the minimum number of positions between any two scatter symbols on a reel. This prevents clusters of scatters and ensures fair, random distribution. If the requested number of scatters and minimum distance cannot fit on a reel, the game will throw a configuration error at startup. This logic is enforced in code and tested in the unit tests for reliability and game balance.
+
 ## Running & Building
 - **Build**: `gradle build`
 - **Run**: `gradle run` or run `Main` in your IDE

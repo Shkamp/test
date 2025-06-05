@@ -1,5 +1,13 @@
 package com.enigma.slotmachine;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.EnumMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 /**
  * Unit tests for the SlotMachine game logic, including reels, symbol distribution,
  * scatter placement, paylines, payouts, and edge cases. All tests use JUnit 5.
