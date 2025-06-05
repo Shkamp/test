@@ -72,6 +72,7 @@ public class Reel {
         return strip.toArray(new Symbol[0]);
     }
 
+    //Checks if the requested number of scatters and minimum distance is feasible
     private void checkScatterFeasibility(Map<Symbol, Integer> symbolDistribution, int minDistance) {
         int scatterCount = symbolDistribution.getOrDefault(Symbol.SCATTER, 2);
         int size = 0;
