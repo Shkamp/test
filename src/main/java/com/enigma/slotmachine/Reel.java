@@ -36,16 +36,8 @@ public class Reel {
             }
         }
         Collections.shuffle(temp, random);
-        removeTwoRandomSymbols(temp);
         placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, 2));
         return temp;
-    }
-
-    // Removes two random symbols from the list to make space for scatters
-    private void removeTwoRandomSymbols(List<Symbol> temp) {
-        // Remove the first two elements after shuffle (randomized)
-        temp.remove(1);
-        temp.remove(0);
     }
 
     // Places two scatters at valid, spaced positions in the list
