@@ -27,6 +27,7 @@ public class Main {
         boolean payAllWins = true;
         String symbolConfig = null;
         String paylinesConfig = null;
+        SlotMachine slotMachine;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
             Properties config = new Properties();
             config.load(configStream);
@@ -34,11 +35,21 @@ public class Main {
             if (payAll != null) payAllWins = Boolean.parseBoolean(payAll);
             symbolConfig = config.getProperty("symbols");
             paylinesConfig = config.getProperty("paylines");
+            String minScatterDistanceStr = config.getProperty("minScatterDistance");
+            int minScatterDistance = 3;
+            if (minScatterDistanceStr != null) {
+                try {
+                    minScatterDistance = Integer.parseInt(minScatterDistanceStr);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid minScatterDistance in config, using default 3.");
+                }
+            }
+            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance);
         } catch (IOException e) {
-            System.out.println("Config file not found or unreadable, using default payout mode (pay all wins).");
+            System.out.println("Config file not found or unreadable, using default payout mode (pay all wins). Using default scatter distance.");
+            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, 3);
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        SlotMachine slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig); // Updated constructor
         int freeSpins = 0;
         System.out.println("Welcome to the Java Slot Machine!");
         boolean running = true;

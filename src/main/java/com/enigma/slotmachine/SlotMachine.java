@@ -17,6 +17,7 @@ public class SlotMachine {
     private final boolean payAllWins;
     private final Map<Symbol, Integer> symbolDistribution;
     private final int[][] paylines;
+    private final int minScatterDistance;
 
     /**
      * Constructs a SlotMachine with a starting balance and payout mode.
@@ -24,14 +25,14 @@ public class SlotMachine {
      * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
      */
     public SlotMachine(int startingBalance, boolean payAllWins) {
-        this(startingBalance, payAllWins, null, null);
+        this(startingBalance, payAllWins, null, null, 3);
     }
     /**
      * Constructs a SlotMachine with a starting balance, defaulting to pay all wins.
      * @param startingBalance Initial player balance
      */
     public SlotMachine(int startingBalance) {
-        this(startingBalance, true, null, null);
+        this(startingBalance, true, null, null, 3);
     }
     /**
      * Constructs a SlotMachine with a starting balance, payout mode, symbol distribution, and paylines.
@@ -41,13 +42,25 @@ public class SlotMachine {
      * @param paylinesConfig Paylines string (e.g., 1,1,1,1,1;0,0,0,0,0;...)
      */
     public SlotMachine(int startingBalance, boolean payAllWins, String symbolConfig, String paylinesConfig) {
+        this(startingBalance, payAllWins, symbolConfig, paylinesConfig, 3);
+    }
+    /**
+     * Constructs a SlotMachine with a starting balance, payout mode, symbol distribution, paylines, and min scatter distance.
+     * @param startingBalance Initial player balance
+     * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
+     * @param symbolConfig Symbol distribution string (e.g., TEN:15,J:15,...)
+     * @param paylinesConfig Paylines string (e.g., 1,1,1,1,1;0,0,0,0,0;...)
+     * @param minScatterDistance Minimum distance between scatters on a reel
+     */
+    public SlotMachine(int startingBalance, boolean payAllWins, String symbolConfig, String paylinesConfig, int minScatterDistance) {
         this.balance = startingBalance;
         this.payAllWins = payAllWins;
         this.symbolDistribution = parseSymbolDistribution(symbolConfig);
         this.paylines = parsePaylines(paylinesConfig);
+        this.minScatterDistance = minScatterDistance;
         slotReels = new Reel[REELS];
         for (int i = 0; i < REELS; i++) {
-            slotReels[i] = new Reel(symbolDistribution);
+            slotReels[i] = new Reel(symbolDistribution, minScatterDistance);
         }
     }
 

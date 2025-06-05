@@ -2,6 +2,9 @@ package com.enigma.slotmachine;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class SlotMachineTest {
@@ -143,6 +146,114 @@ class SlotMachineTest {
                 if (symbols[(i + j) % symbols.length] == Symbol.SCATTER) scatterCount++;
             }
             assertTrue(scatterCount <= 1, "No window of 3 symbols should have more than one scatter");
+        }
+    }
+
+    @Test
+    void testReelSymbolDistributionDefault() {
+        int minScatterDistance = 3;
+        Map<Symbol, Integer> defaultDist = new EnumMap<>(Symbol.class);
+        defaultDist.put(Symbol.TEN, 15);
+        defaultDist.put(Symbol.J, 15);
+        defaultDist.put(Symbol.Q, 15);
+        defaultDist.put(Symbol.K, 10);
+        defaultDist.put(Symbol.A, 10);
+        defaultDist.put(Symbol.P1, 6);
+        defaultDist.put(Symbol.P2, 6);
+        defaultDist.put(Symbol.P3, 3);
+        defaultDist.put(Symbol.P4, 3);
+        defaultDist.put(Symbol.SCATTER, 2);
+        Reel reel = new Reel(defaultDist, minScatterDistance);
+        Symbol[] strip = reel.getFullStrip();
+        Map<Symbol, Integer> counts = new EnumMap<>(Symbol.class);
+        for (Symbol s : strip) counts.put(s, counts.getOrDefault(s, 0) + 1);
+        assertEquals(15, counts.get(Symbol.TEN));
+        assertEquals(15, counts.get(Symbol.J));
+        assertEquals(15, counts.get(Symbol.Q));
+        assertEquals(10, counts.get(Symbol.K));
+        assertEquals(10, counts.get(Symbol.A));
+        assertEquals(6, counts.get(Symbol.P1));
+        assertEquals(6, counts.get(Symbol.P2));
+        assertEquals(3, counts.get(Symbol.P3));
+        assertEquals(3, counts.get(Symbol.P4));
+        assertEquals(2, counts.get(Symbol.SCATTER));
+        int total = 0;
+        for (int v : counts.values()) total += v;
+        assertEquals(85, total);
+    }
+
+    @Test
+    void testReelSymbolDistributionCustom() {
+        int minScatterDistance = 3;
+        Map<Symbol, Integer> customDist = new EnumMap<>(Symbol.class);
+        customDist.put(Symbol.TEN, 5);
+        customDist.put(Symbol.J, 4);
+        customDist.put(Symbol.Q, 3);
+        customDist.put(Symbol.K, 2);
+        customDist.put(Symbol.A, 1);
+        customDist.put(Symbol.P1, 1);
+        customDist.put(Symbol.P2, 1);
+        customDist.put(Symbol.P3, 1);
+        customDist.put(Symbol.P4, 1);
+        customDist.put(Symbol.SCATTER, 2);
+        Reel reel = new Reel(customDist, minScatterDistance);
+        Symbol[] strip = reel.getFullStrip();
+        Map<Symbol, Integer> counts = new EnumMap<>(Symbol.class);
+        for (Symbol s : strip) counts.put(s, counts.getOrDefault(s, 0) + 1);
+        assertEquals(5, counts.get(Symbol.TEN));
+        assertEquals(4, counts.get(Symbol.J));
+        assertEquals(3, counts.get(Symbol.Q));
+        assertEquals(2, counts.get(Symbol.K));
+        assertEquals(1, counts.get(Symbol.A));
+        assertEquals(1, counts.get(Symbol.P1));
+        assertEquals(1, counts.get(Symbol.P2));
+        assertEquals(1, counts.get(Symbol.P3));
+        assertEquals(1, counts.get(Symbol.P4));
+        assertEquals(2, counts.get(Symbol.SCATTER));
+        int total = 0;
+        for (int v : counts.values()) total += v;
+        assertEquals(21, total);
+    }
+
+    @Test
+    void testScatterMinimumDistanceOnReel() {
+        int minScatterDistance = 3;
+        Map<Symbol, Integer> defaultDist = new EnumMap<>(Symbol.class);
+        defaultDist.put(Symbol.TEN, 15);
+        defaultDist.put(Symbol.J, 15);
+        defaultDist.put(Symbol.Q, 15);
+        defaultDist.put(Symbol.K, 10);
+        defaultDist.put(Symbol.A, 10);
+        defaultDist.put(Symbol.P1, 6);
+        defaultDist.put(Symbol.P2, 6);
+        defaultDist.put(Symbol.P3, 3);
+        defaultDist.put(Symbol.P4, 3);
+        defaultDist.put(Symbol.SCATTER, 2);
+        Reel reel = new Reel(defaultDist, minScatterDistance);
+        Symbol[] symbols = reel.getFullStrip();
+        int lastScatterIndex = -1;
+        int scatterCount = 0;
+        for (int i = 0; i < symbols.length; i++) {
+            if (symbols[i] == Symbol.SCATTER) {
+                scatterCount++;
+                if (lastScatterIndex != -1) {
+                    int distance = i - lastScatterIndex;
+                    assertTrue(distance >= minScatterDistance, "Scatters must be at least " + minScatterDistance + " apart (linear strip)");
+                }
+                lastScatterIndex = i;
+            }
+        }
+        // Also check wrap-around (circular strip)
+        if (scatterCount > 1) {
+            int firstScatter = -1, lastScatter = -1;
+            for (int i = 0; i < symbols.length; i++) {
+                if (symbols[i] == Symbol.SCATTER) {
+                    if (firstScatter == -1) firstScatter = i;
+                    lastScatter = i;
+                }
+            }
+            int wrapDistance = (firstScatter + symbols.length) - lastScatter;
+            assertTrue(wrapDistance >= minScatterDistance, "Scatters must be at least " + minScatterDistance + " apart (wrap-around)");
         }
     }
 }
