@@ -1,6 +1,10 @@
-/* package com.enigma.slotmachine;
+package com.slotmachine;
 
 import org.junit.jupiter.api.Test;
+
+import com.enigma.slotmachine.SlotMachine;
+import com.enigma.slotmachine.Symbol;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SlotMachineTest {
@@ -65,4 +69,3 @@ public class SlotMachineTest {
         assertTrue(payout >= 2);
     }
 }
- */
