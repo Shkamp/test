@@ -1,4 +1,4 @@
-package com.slotmachine;
+package com.enigma.slotmachine;
 
 import org.junit.jupiter.api.Test;
 
