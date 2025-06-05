@@ -13,21 +13,31 @@ public class Reel {
         this.strip = buildReelStrip();
     }
 
+    public Reel(Map<Symbol, Integer> symbolDistribution) {
+        this.random = new Random();
+        this.strip = buildReelStrip(symbolDistribution);
+    }
+
     // Build the reel strip with correct symbol counts and scatter spacing
     private List<Symbol> buildReelStrip() {
+        Map<Symbol, Integer> defaultDist = new EnumMap<>(Symbol.class);
+        defaultDist.put(Symbol.TEN, 15); defaultDist.put(Symbol.J, 15); defaultDist.put(Symbol.Q, 15);
+        defaultDist.put(Symbol.K, 10); defaultDist.put(Symbol.A, 10);
+        defaultDist.put(Symbol.P1, 6); defaultDist.put(Symbol.P2, 6);
+        defaultDist.put(Symbol.P3, 3); defaultDist.put(Symbol.P4, 3); defaultDist.put(Symbol.SCATTER, 2);
+        return buildReelStrip(defaultDist);
+    }
+
+    private List<Symbol> buildReelStrip(Map<Symbol, Integer> symbolDistribution) {
         List<Symbol> temp = new ArrayList<>();
-        addSymbols(temp, Symbol.TEN, 15);
-        addSymbols(temp, Symbol.J, 15);
-        addSymbols(temp, Symbol.Q, 15);
-        addSymbols(temp, Symbol.K, 10);
-        addSymbols(temp, Symbol.A, 10);
-        addSymbols(temp, Symbol.P1, 6);
-        addSymbols(temp, Symbol.P2, 6);
-        addSymbols(temp, Symbol.P3, 3);
-        addSymbols(temp, Symbol.P4, 3);
+        for (Map.Entry<Symbol, Integer> entry : symbolDistribution.entrySet()) {
+            if (entry.getKey() != Symbol.SCATTER) {
+                addSymbols(temp, entry.getKey(), entry.getValue());
+            }
+        }
         Collections.shuffle(temp, random);
         removeTwoRandomSymbols(temp);
-        placeScatters(temp);
+        placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, 2));
         return temp;
     }
 
@@ -46,6 +56,24 @@ public class Reel {
         if (Math.abs(scatter1 - scatter2) < 3) scatter2 = (scatter2 + 3) % size;
         temp.add(scatter1, Symbol.SCATTER);
         temp.add(scatter2 < scatter1 ? scatter2 : scatter2 + 1, Symbol.SCATTER); // adjust for earlier insert
+    }
+
+    // Overload for custom scatter count
+    private void placeScatters(List<Symbol> temp, int scatterCount) {
+        int size = temp.size();
+        if (scatterCount == 2) {
+            int scatter1 = random.nextInt(size - 6) + 3;
+            int scatter2 = (scatter1 + size / 2) % size;
+            if (Math.abs(scatter1 - scatter2) < 3) scatter2 = (scatter2 + 3) % size;
+            temp.add(scatter1, Symbol.SCATTER);
+            temp.add(scatter2 < scatter1 ? scatter2 : scatter2 + 1, Symbol.SCATTER);
+        } else {
+            // Evenly space scatters
+            for (int i = 0; i < scatterCount; i++) {
+                int pos = (i * size) / scatterCount + i;
+                temp.add(Math.min(pos, temp.size()), Symbol.SCATTER);
+            }
+        }
     }
 
     private void addSymbols(List<Symbol> list, Symbol symbol, int count) {

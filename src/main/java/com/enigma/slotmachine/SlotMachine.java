@@ -1,5 +1,8 @@
 package com.enigma.slotmachine;
 
+import java.util.Map;
+import java.util.EnumMap;
+
 /**
  * Main game logic for the slot machine.
  * Handles reels, paylines, symbol distribution, spins, payouts, and configuration.
@@ -7,18 +10,13 @@ package com.enigma.slotmachine;
 public class SlotMachine {
     private static final int REELS = 5;
     private static final int ROWS = 3;
-    private static final int[][] PAYLINES = {
-        {0, 0, 0, 0, 0}, // Top row
-        {1, 1, 1, 1, 1}, // Middle row
-        {2, 2, 2, 2, 2}, // Bottom row
-        {0, 1, 2, 1, 0}, // V shape
-        {2, 1, 0, 1, 2}  // Inverted V
-    };
     private final Reel[] slotReels;
     private int balance;
     private int betAmount = 1;
     private static final int[] BET_OPTIONS = {1, 2, 5, 10};
     private final boolean payAllWins;
+    private final Map<Symbol, Integer> symbolDistribution;
+    private final int[][] paylines;
 
     /**
      * Constructs a SlotMachine with a starting balance and payout mode.
@@ -26,19 +24,31 @@ public class SlotMachine {
      * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
      */
     public SlotMachine(int startingBalance, boolean payAllWins) {
-        this.balance = startingBalance;
-        this.payAllWins = payAllWins;
-        slotReels = new Reel[REELS];
-        for (int i = 0; i < REELS; i++) {
-            slotReels[i] = new Reel();
-        }
+        this(startingBalance, payAllWins, null, null);
     }
     /**
      * Constructs a SlotMachine with a starting balance, defaulting to pay all wins.
      * @param startingBalance Initial player balance
      */
     public SlotMachine(int startingBalance) {
-        this(startingBalance, true);
+        this(startingBalance, true, null, null);
+    }
+    /**
+     * Constructs a SlotMachine with a starting balance, payout mode, symbol distribution, and paylines.
+     * @param startingBalance Initial player balance
+     * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
+     * @param symbolConfig Symbol distribution string (e.g., TEN:15,J:15,...)
+     * @param paylinesConfig Paylines string (e.g., 1,1,1,1,1;0,0,0,0,0;...)
+     */
+    public SlotMachine(int startingBalance, boolean payAllWins, String symbolConfig, String paylinesConfig) {
+        this.balance = startingBalance;
+        this.payAllWins = payAllWins;
+        this.symbolDistribution = parseSymbolDistribution(symbolConfig);
+        this.paylines = parsePaylines(paylinesConfig);
+        slotReels = new Reel[REELS];
+        for (int i = 0; i < REELS; i++) {
+            slotReels[i] = new Reel(symbolDistribution);
+        }
     }
 
     /**
@@ -127,7 +137,7 @@ public class SlotMachine {
     public int calculatePayout(Symbol[][] grid) {
         int totalPayout = 0;
         // Check paylines for 3, 4, 5 consecutive matches
-        for (int[] payline : PAYLINES) {
+        for (int[] payline : paylines) {
             Symbol first = grid[payline[0]][0];
             if (first == Symbol.SCATTER) continue;
             int match = 1;
@@ -242,9 +252,8 @@ public class SlotMachine {
         java.util.List<LineWin> lineWins = new java.util.ArrayList<>();
         int totalPayout = 0;
         LineWin highest = null;
-        // Check paylines for 3, 4, 5 consecutive matches
-        for (int i = 0; i < PAYLINES.length; i++) {
-            int[] payline = PAYLINES[i];
+        for (int i = 0; i < paylines.length; i++) {
+            int[] payline = paylines[i];
             Symbol first = grid[payline[0]][0];
             if (first == Symbol.SCATTER) continue;
             int match = 1;
@@ -278,5 +287,46 @@ public class SlotMachine {
             totalPayout += scatterPayout;
         }
         return new SpinResult(grid, lineWins, scatterCount, scatterPayout, totalPayout);
+    }
+
+    private Map<Symbol, Integer> parseSymbolDistribution(String config) {
+        Map<Symbol, Integer> map = new EnumMap<>(Symbol.class);
+        if (config == null) {
+            map.put(Symbol.TEN, 15); map.put(Symbol.J, 15); map.put(Symbol.Q, 15);
+            map.put(Symbol.K, 10); map.put(Symbol.A, 10);
+            map.put(Symbol.P1, 6); map.put(Symbol.P2, 6);
+            map.put(Symbol.P3, 3); map.put(Symbol.P4, 3); map.put(Symbol.SCATTER, 2);
+            return map;
+        }
+        for (String entry : config.split(",")) {
+            String[] parts = entry.split(":");
+            if (parts.length == 2) {
+                Symbol s = Symbol.valueOf(parts[0]);
+                int count = Integer.parseInt(parts[1]);
+                map.put(s, count);
+            }
+        }
+        return map;
+    }
+
+    private int[][] parsePaylines(String config) {
+        if (config == null) {
+            return new int[][] {
+                {1, 1, 1, 1, 1},
+                {0, 0, 0, 0, 0},
+                {2, 2, 2, 2, 2},
+                {0, 1, 2, 1, 0},
+                {2, 1, 0, 1, 2}
+            };
+        }
+        String[] lines = config.split(";");
+        int[][] result = new int[lines.length][5];
+        for (int i = 0; i < lines.length; i++) {
+            String[] nums = lines[i].split(",");
+            for (int j = 0; j < 5; j++) {
+                result[i][j] = Integer.parseInt(nums[j]);
+            }
+        }
+        return result;
     }
 }

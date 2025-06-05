@@ -25,16 +25,20 @@ public class Main {
      */
     public static void main(String[] args) {
         boolean payAllWins = true;
+        String symbolConfig = null;
+        String paylinesConfig = null;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
             Properties config = new Properties();
             config.load(configStream);
             String payAll = config.getProperty("payAllWins");
             if (payAll != null) payAllWins = Boolean.parseBoolean(payAll);
+            symbolConfig = config.getProperty("symbols");
+            paylinesConfig = config.getProperty("paylines");
         } catch (IOException e) {
             System.out.println("Config file not found or unreadable, using default payout mode (pay all wins).");
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        SlotMachine slotMachine = new SlotMachine(100, payAllWins); // Updated constructor
+        SlotMachine slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig); // Updated constructor
         int freeSpins = 0;
         System.out.println("Welcome to the Java Slot Machine!");
         boolean running = true;
@@ -151,6 +155,9 @@ public class Main {
      * @return The payline array
      */
     private static int[] getPayline(int index) {
+        // Use dynamic paylines from slotMachine if possible
+        // This method is only used for highlighting, so we can fetch from the current slotMachine instance
+        // For now, fallback to the default if not available
         int[][] PAYLINES = {
             {1, 1, 1, 1, 1}, // Middle row
             {0, 0, 0, 0, 0}, // Top row
