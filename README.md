@@ -21,9 +21,9 @@ See `slotmachine.properties` for all options:
 - `minScatterDistance`: Minimum distance between scatters on a reel
 
 ## Running & Building
-- **Build**: `./gradlew build`
-- **Run**: `./gradlew run` or run `Main` in your IDE
-- **Test**: `./gradlew test`
+- **Build**: `gradle build`
+- **Run**: `gradle run` or run `Main` in your IDE
+- **Test**: `gradle test`
 - **Debug**: Use VS Code tasks/launch configs for Gradle test debugging
 
 ## Code Structure
