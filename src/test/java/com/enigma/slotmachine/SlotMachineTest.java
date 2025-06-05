@@ -1,12 +1,23 @@
 package com.enigma.slotmachine;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.EnumMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+/**
+ * Unit tests for the SlotMachine game logic, including reels, symbol distribution,
+ * scatter placement, paylines, payouts, and edge cases. All tests use JUnit 5.
+ *
+ * <p>Tests include:
+ * <ul>
+ *   <li>Balance and bet logic</li>
+ *   <li>Spin output and grid structure</li>
+ *   <li>Scatter counting and payout logic</li>
+ *   <li>Payline wins (including V and inverted V shapes)</li>
+ *   <li>Simultaneous wins and payout modes</li>
+ *   <li>Reel symbol distribution (default and custom)</li>
+ *   <li>Scatter minimum distance enforcement</li>
+ *   <li>Edge cases (min/max balance, bet changes, etc.)</li>
+ * </ul>
+ *
+ * <p>All tests are self-contained and do not require external resources.
+ */
 class SlotMachineTest {
     @Test
     void testInitialBalance() {
@@ -182,6 +193,12 @@ class SlotMachineTest {
         assertEquals(85, total);
     }
 
+    /**
+     * Verifies that a custom symbol distribution and minimum scatter distance
+     * produces a reel with the correct number of each symbol and total symbols.
+     * This ensures the Reel constructor respects custom configuration and
+     * that scatter placement does not lose or duplicate symbols.
+     */
     @Test
     void testReelSymbolDistributionCustom() {
         int minScatterDistance = 3;

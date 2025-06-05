@@ -1,14 +1,10 @@
 package com.enigma.slotmachine;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Properties;
-
 /**
  * Main entry point for the Java console slot machine game.
- * Handles user interaction, menu, and game loop.
+ * <p>
+ * Handles user interaction, menu, and game loop. Reads configuration from slotmachine.properties.
+ * Provides a console interface for spinning, viewing payouts, and changing bets.
  */
 public class Main {
     private static final String[] PAYLINE_NAMES = {

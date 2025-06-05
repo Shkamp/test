@@ -4,6 +4,13 @@ package com.enigma.slotmachine;
 
 import java.util.*;
 
+/**
+ * Represents a single reel in the slot machine.
+ * <p>
+ * Handles symbol distribution, random spinning, and scatter placement with configurable minimum distance.
+ * Used by SlotMachine to build the 5x3 slot grid.
+ */
+
 public class Reel {
     private final List<Symbol> strip;
     private final Random random;

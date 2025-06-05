@@ -4,7 +4,7 @@ package com.enigma.slotmachine;
 
 /**
  * Enum representing all possible symbols on the slot machine reels.
- * Each symbol has a display name and payout values for 3, 4, or 5 in a row.
+ * Each symbol can have a name and payout values for 3, 4, or 5 in a row.
  */
 public enum Symbol {
     TEN("10", new int[]{1, 2, 4}),

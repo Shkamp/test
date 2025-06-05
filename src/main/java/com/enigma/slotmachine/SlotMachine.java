@@ -1,11 +1,13 @@
 package com.enigma.slotmachine;
 
-import java.util.Map;
-import java.util.EnumMap;
-
 /**
  * Main game logic for the slot machine.
- * Handles reels, paylines, symbol distribution, spins, payouts, and configuration.
+ * <p>
+ * Handles reels, paylines, symbol distribution, spins, payouts, configuration, and user balance.
+ * Supports configurable symbol distribution, paylines, and minimum scatter distance via properties.
+ * Implements payout logic for paylines and scatters, including free spins and bonus features.
+ * <p>
+ * All configuration is loaded from slotmachine.properties, and the game is designed for extensibility and testability.
  */
 public class SlotMachine {
     private static final int REELS = 5;
