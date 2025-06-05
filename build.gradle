@@ -6,7 +6,9 @@ plugins {
 group = 'com.enigma'
 version = '1.0'
 
-sourceCompatibility = '17'
+java {
+    sourceCompatibility = JavaVersion.VERSION_18
+}
 
 application {
     mainClass = 'com.enigma.slotmachine.Main'
