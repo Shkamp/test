@@ -45,6 +45,7 @@ public class Main {
         String symbolConfig = null;
         String paylinesConfig = null;
         int autospinCount = 1000;
+        int freeSpinsPerTrigger = 10;
         SlotMachine slotMachine;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
             Properties config = new Properties();
@@ -56,6 +57,7 @@ public class Main {
             paylinesConfig = config.getProperty("paylines");
             String minScatterDistanceStr = config.getProperty("minScatterDistance");
             String autospinCountStr = config.getProperty("autospinCount");
+            String freeSpinsStr = config.getProperty("freeSpinsPerTrigger");
             int minScatterDistance = 3;
             if (minScatterDistanceStr != null) {
                 try {
@@ -69,6 +71,13 @@ public class Main {
                     autospinCount = Integer.parseInt(autospinCountStr);
                 } catch (NumberFormatException e) {
                     System.out.println("Invalid autospinCount in config, using default 1000.");
+                }
+            }
+            if (freeSpinsStr != null) {
+                try {
+                    freeSpinsPerTrigger = Integer.parseInt(freeSpinsStr);
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid freeSpinsPerTrigger in config, using default 10.");
                 }
             }
             slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance);
@@ -89,7 +98,7 @@ public class Main {
                 String input = reader.readLine();
                 switch (input) {
                     case "1":
-                        freeSpins = handleSpin(slotMachine, freeSpins, reader, stats);
+                        freeSpins = handleSpin(slotMachine, freeSpins, reader, stats, freeSpinsPerTrigger);
                         break;
                     case "2":
                         slotMachine.printPayoutTable();
@@ -148,10 +157,11 @@ public class Main {
      * @param freeSpins   Number of free spins left
      * @param reader      BufferedReader for user input
      * @param stats       Session statistics
+     * @param freeSpinsPerTrigger Number of free spins awarded for triggering scatters
      * @return Updated free spins count
      * @throws IOException If an input or output exception occurred
      */
-    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats)
+    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats, int freeSpinsPerTrigger)
             throws IOException {
         if (freeSpins == 0 && slotMachine.getBalance() < slotMachine.getBetAmount()) {
             System.out.println("Not enough balance to spin. Each spin costs " + slotMachine.getBetAmount() + ".");
@@ -180,8 +190,8 @@ public class Main {
             System.out.println("No win this time.");
         }
         if (result.scatterCount >= 3) {
-            System.out.printf("Bonus! You triggered 10 free spins with %d Scatters!%n", result.scatterCount);
-            freeSpins += 10;
+            System.out.printf("Bonus! You triggered %d free spins with %d Scatters!%n", freeSpinsPerTrigger, result.scatterCount);
+            freeSpins += freeSpinsPerTrigger;
         }
         return freeSpins;
     }
