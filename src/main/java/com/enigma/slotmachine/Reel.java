@@ -43,7 +43,7 @@ public class Reel {
             }
         }
         Collections.shuffle(temp, random);
-        placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, 2), minScatterDistance);
+        placeScatters(temp, symbolDistribution.getOrDefault(Symbol.SCATTER, symbolDistribution.get(Symbol.SCATTER)), minScatterDistance);
         return temp;
     }
 
