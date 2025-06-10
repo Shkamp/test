@@ -11,7 +11,7 @@ import java.util.*;
  * Used by SlotMachine to build the 5x3 slot grid.
  */
 
-public class Reel {
+public class Reel implements IReel {
     private final List<Symbol> strip;
     private final Random random;
 
@@ -119,5 +119,30 @@ public class Reel {
             int pos = positions.get(i) + i; // adjust for previous inserts
             temp.add(pos, Symbol.SCATTER);
         }
+    }
+
+    /**
+     * Parses a symbol distribution string into a map.
+     * @param config Symbol distribution string (e.g., TEN:15,J:15,...)
+     * @return Map of Symbol to count
+     */
+    public static Map<Symbol, Integer> parseSymbolDistribution(String config) {
+        Map<Symbol, Integer> map = new EnumMap<>(Symbol.class);
+        if (config == null) {
+            map.put(Symbol.TEN, 15); map.put(Symbol.J, 15); map.put(Symbol.Q, 15);
+            map.put(Symbol.K, 10); map.put(Symbol.A, 10);
+            map.put(Symbol.P1, 6); map.put(Symbol.P2, 6);
+            map.put(Symbol.P3, 3); map.put(Symbol.P4, 3); map.put(Symbol.SCATTER, 2);
+            return map;
+        }
+        for (String entry : config.split(",")) {
+            String[] parts = entry.split(":");
+            if (parts.length == 2) {
+                Symbol s = Symbol.valueOf(parts[0]);
+                int count = Integer.parseInt(parts[1]);
+                map.put(s, count);
+            }
+        }
+        return map;
     }
 }

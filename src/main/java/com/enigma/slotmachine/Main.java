@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -80,11 +81,23 @@ public class Main {
                     System.out.println("Invalid freeSpinsPerTrigger in config, using default 10.");
                 }
             }
-            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance);
+            // Dependency injection: create reels externally
+            IReel[] reels = new IReel[5];
+            Map<Symbol, Integer> symbolDist = Reel.parseSymbolDistribution(symbolConfig);
+            for (int i = 0; i < 5; i++) {
+                reels[i] = new Reel(symbolDist, minScatterDistance);
+            }
+            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, minScatterDistance, reels);
         } catch (IOException e) {
             System.out.println(
                     "Config file not found or unreadable, using default payout mode (pay all wins). Using default scatter distance.");
-            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, 3);
+            // Fallback: create default reels
+            IReel[] reels = new IReel[5];
+            Map<Symbol, Integer> symbolDist = Reel.parseSymbolDistribution(symbolConfig);
+            for (int i = 0; i < 5; i++) {
+                reels[i] = new Reel(symbolDist, 3);
+            }
+            slotMachine = new SlotMachine(100, payAllWins, symbolConfig, paylinesConfig, 3, reels);
         }
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         int freeSpins = 0;
@@ -333,7 +346,7 @@ public class Main {
         }
     }
 
-/**
+    /**
      * Runs a predefined number of auto-spins for analytics.
      * @param slotMachine The slot machine instance
      * @param stats Session statistics
@@ -355,18 +368,23 @@ public class Main {
             if (result.totalPayout > 0) {
                 autoBalance += result.totalPayout;
                 autoTotalWon += result.totalPayout;
-                if (result.totalPayout > autoBiggestWin) autoBiggestWin = result.totalPayout;
+                if (result.totalPayout > autoBiggestWin) {
+                    autoBiggestWin = result.totalPayout;
+                }
             } else {
                 autoTotalLost += slotMachine.getBetAmount();
             }
         }
-        stats.totalWon += autoTotalWon;
-        stats.totalLost += autoTotalLost;
-        if (autoTotalWon > 0) {
-            System.out.printf("Auto-spin session won: %d (Biggest win: %d)%n", autoTotalWon, autoBiggestWin);
-        } else {
-            System.out.println("Auto-spin session finished with no wins.");
-        }
-        System.out.printf("Ending balance after auto-spins: %d%n", autoBalance);
+        int net = autoBalance - startBalance;
+        System.out.println("--- Auto-Spin Analytics ---");
+        System.out.printf("Total Auto-Spins: %d\n", autospinCount);
+        System.out.printf("Total Won: %d\n", autoTotalWon);
+        System.out.printf("Total Lost: %d\n", autoTotalLost);
+        System.out.printf("Biggest Win: %d\n", autoBiggestWin);
+        System.out.printf("Starting Balance: %d\n", startBalance);
+        System.out.printf("Ending Balance: %d\n", autoBalance);
+        System.out.printf("Net Result: %s%d\n", net >= 0 ? "+" : "", net);
+        double rtp = (double) autoTotalWon / (autospinCount * slotMachine.getBetAmount()) * 100.0;
+        System.out.printf("RTP (Return to Player): %.2f%%\n", rtp);
     }
 }

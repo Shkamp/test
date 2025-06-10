@@ -12,10 +12,10 @@ import java.util.Map;
  * <p>
  * All configuration is loaded from slotmachine.properties, and the game is designed for extensibility and testability.
  */
-public class SlotMachine {
+public class SlotMachine implements ISlotMachine {
     private static final int REELS = 5;
     private static final int ROWS = 3;
-    private final Reel[] slotReels;
+    private final IReel[] slotReels;
     private int balance;
     private int betAmount = 1;
     private static final int[] BET_OPTIONS = {1, 2, 5, 10};
@@ -60,13 +60,33 @@ public class SlotMachine {
     public SlotMachine(int startingBalance, boolean payAllWins, String symbolConfig, String paylinesConfig, int minScatterDistance) {
         this.balance = startingBalance;
         this.payAllWins = payAllWins;
-        this.symbolDistribution = parseSymbolDistribution(symbolConfig);
+        this.symbolDistribution = Reel.parseSymbolDistribution(symbolConfig);
         this.paylines = parsePaylines(paylinesConfig);
         this.minScatterDistance = minScatterDistance;
-        slotReels = new Reel[REELS];
+        slotReels = new IReel[REELS];
         for (int i = 0; i < REELS; i++) {
             slotReels[i] = new Reel(symbolDistribution, minScatterDistance);
         }
+    }
+    /**
+     * Constructs a SlotMachine with externally provided reels (for dependency injection).
+     * @param startingBalance Initial player balance
+     * @param payAllWins If true, pay all winning lines; if false, only pay the highest line win
+     * @param symbolConfig Symbol distribution string (e.g., TEN:15,J:15,...)
+     * @param paylinesConfig Paylines string (e.g., 1,1,1,1,1;0,0,0,0,0;...)
+     * @param minScatterDistance Minimum distance between scatters on a reel
+     * @param reels Array of IReel to use (must be length 5)
+     */
+    public SlotMachine(int startingBalance, boolean payAllWins, String symbolConfig, String paylinesConfig, int minScatterDistance, IReel[] reels) {
+        this.balance = startingBalance;
+        this.payAllWins = payAllWins;
+        this.symbolDistribution = Reel.parseSymbolDistribution(symbolConfig);
+        this.paylines = parsePaylines(paylinesConfig);
+        this.minScatterDistance = minScatterDistance;
+        if (reels == null || reels.length != REELS) {
+            throw new IllegalArgumentException("Reels array must be non-null and of length " + REELS);
+        }
+        this.slotReels = reels;
     }
 
     /**
@@ -313,26 +333,6 @@ public class SlotMachine {
             totalPayout += scatterPayout;
         }
         return new SpinResult(grid, lineWins, scatterCount, scatterPayout, totalPayout);
-    }
-
-    private Map<Symbol, Integer> parseSymbolDistribution(String config) {
-        Map<Symbol, Integer> map = new EnumMap<>(Symbol.class);
-        if (config == null) {
-            map.put(Symbol.TEN, 15); map.put(Symbol.J, 15); map.put(Symbol.Q, 15);
-            map.put(Symbol.K, 10); map.put(Symbol.A, 10);
-            map.put(Symbol.P1, 6); map.put(Symbol.P2, 6);
-            map.put(Symbol.P3, 3); map.put(Symbol.P4, 3); map.put(Symbol.SCATTER, 2);
-            return map;
-        }
-        for (String entry : config.split(",")) {
-            String[] parts = entry.split(":");
-            if (parts.length == 2) {
-                Symbol s = Symbol.valueOf(parts[0]);
-                int count = Integer.parseInt(parts[1]);
-                map.put(s, count);
-            }
-        }
-        return map;
     }
 
     private int[][] parsePaylines(String config) {
