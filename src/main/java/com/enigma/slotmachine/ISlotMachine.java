@@ -1,5 +1,7 @@
 package com.enigma.slotmachine;
 
+import com.enigma.slotmachine.SpinResult;
+
 /**
  * Interface for a slot machine, allowing for swappable implementations.
  */
@@ -14,4 +16,7 @@ public interface ISlotMachine {
     int[][] getPaylines();
     int countScatters(Symbol[][] grid);
     int calculatePayout(Symbol[][] grid);
+    SpinResult spinAndEvaluate();
+    void printPayoutTable();
+
 }

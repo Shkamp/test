@@ -3,6 +3,7 @@ package com.enigma.slotmachine;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.*;
 import org.junit.jupiter.api.Test;
+import com.enigma.slotmachine.SpinResult;
 
 /**
  * Unit test for Main.getHighlightMatrix to verify highlighting for custom paylines.
@@ -20,8 +21,8 @@ public class MainHighlightTest {
             {Symbol.P4, Symbol.P2, Symbol.Q, Symbol.P4, Symbol.P2}
         };
         // Simulate a win on the V-shape payline (all Q)
-        List<SlotMachine.LineWin> wins = new ArrayList<>();
-        wins.add(new SlotMachine.LineWin(1, Symbol.Q, 5, 4));
+        List<SpinResult.LineWin> wins = new ArrayList<>();
+        wins.add(new SpinResult.LineWin(1, Symbol.Q, 5, 4));
         boolean[][] highlight = Main.getHighlightMatrix(grid, wins, paylines);
         // Only the V-shape cells should be highlighted
         int[][] expected = new int[][] {
@@ -47,8 +48,8 @@ public class MainHighlightTest {
             {Symbol.P1, Symbol.P2, Symbol.P3, Symbol.P4, Symbol.P1},
             {Symbol.K, Symbol.K, Symbol.K, Symbol.K, Symbol.K}
         };
-        List<SlotMachine.LineWin> wins = new ArrayList<>();
-        wins.add(new SlotMachine.LineWin(1, Symbol.A, 5, 10));
+        List<SpinResult.LineWin> wins = new ArrayList<>();
+        wins.add(new SpinResult.LineWin(1, Symbol.A, 5, 10));
         boolean[][] highlight = Main.getHighlightMatrix(grid, wins, paylines);
         int[][] expected = new int[][] {
             {1,0,1,0,1},

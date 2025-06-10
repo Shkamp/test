@@ -255,49 +255,14 @@ public class SlotMachine implements ISlotMachine {
     }
 
     /**
-     * Data class representing the result of a spin, including grid, wins, and payout.
-     */
-    public static class SpinResult {
-        public final Symbol[][] grid;
-        public final java.util.List<LineWin> lineWins;
-        public final int scatterCount;
-        public final int scatterPayout;
-        public final int totalPayout;
-
-        public SpinResult(Symbol[][] grid, java.util.List<LineWin> lineWins, int scatterCount, int scatterPayout, int totalPayout) {
-            this.grid = grid;
-            this.lineWins = lineWins;
-            this.scatterCount = scatterCount;
-            this.scatterPayout = scatterPayout;
-            this.totalPayout = totalPayout;
-        }
-    }
-
-    /**
-     * Data class representing a single line win (payline, symbol, count, payout).
-     */
-    public static class LineWin {
-        public final int lineIndex;
-        public final Symbol symbol;
-        public final int count;
-        public final int payout;
-        public LineWin(int lineIndex, Symbol symbol, int count, int payout) {
-            this.lineIndex = lineIndex;
-            this.symbol = symbol;
-            this.count = count;
-            this.payout = payout;
-        }
-    }
-
-    /**
      * Spins the reels and evaluates all wins, returning detailed results.
      * @return SpinResult containing grid, line wins, scatter info, and total payout
      */
     public SpinResult spinAndEvaluate() {
         Symbol[][] grid = spin();
-        java.util.List<LineWin> lineWins = new java.util.ArrayList<>();
+        java.util.List<SpinResult.LineWin> lineWins = new java.util.ArrayList<>();
         int totalPayout = 0;
-        LineWin highest = null;
+        SpinResult.LineWin highest = null;
         for (int i = 0; i < paylines.length; i++) {
             int[] payline = paylines[i];
             Symbol first = grid[payline[0]][0];
@@ -312,7 +277,7 @@ public class SlotMachine implements ISlotMachine {
             }
             if (match >= 3) {
                 int payout = first.getPayout(match) * betAmount;
-                LineWin win = new LineWin(i + 1, first, match, payout);
+                SpinResult.LineWin win = new SpinResult.LineWin(i + 1, first, match, payout);
                 if (payAllWins) {
                     lineWins.add(win);
                     totalPayout += payout;

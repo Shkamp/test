@@ -1,5 +1,7 @@
 package com.enigma.slotmachine;
 
+import com.enigma.slotmachine.SpinResult;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,7 +49,7 @@ public class Main {
         String paylinesConfig = null;
         int autospinCount = 1000;
         int freeSpinsPerTrigger = 10;
-        SlotMachine slotMachine;
+        ISlotMachine slotMachine;
         try (FileInputStream configStream = new FileInputStream("slotmachine.properties")) {
             Properties config = new Properties();
             config.load(configStream);
@@ -146,7 +148,7 @@ public class Main {
      * @param slotMachine The slot machine instance
      * @param freeSpins   Number of free spins left
      */
-    private static void printMenu(SlotMachine slotMachine, int freeSpins, int autospinCount) {
+    private static void printMenu(ISlotMachine slotMachine, int freeSpins, int autospinCount) {
         if (freeSpins > 0) {
             System.out.printf("%nBalance: %d (Free Spins left: %d)%n", slotMachine.getBalance(), freeSpins);
         } else {
@@ -174,7 +176,7 @@ public class Main {
      * @return Updated free spins count
      * @throws IOException If an input or output exception occurred
      */
-    private static int handleSpin(SlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats, int freeSpinsPerTrigger)
+    private static int handleSpin(ISlotMachine slotMachine, int freeSpins, BufferedReader reader, SessionStats stats, int freeSpinsPerTrigger)
             throws IOException {
         if (freeSpins == 0 && slotMachine.getBalance() < slotMachine.getBetAmount()) {
             System.out.println("Not enough balance to spin. Each spin costs " + slotMachine.getBetAmount() + ".");
@@ -188,7 +190,7 @@ public class Main {
             stats.totalSpins++;
         } else
             freeSpins--;
-        SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
+        SpinResult result = slotMachine.spinAndEvaluate();
         System.out.println("\n--- Spin Result ---");
         printHighlightedGrid(result.grid, result.lineWins, slotMachine.getPaylines());
         printSpinSummary(result);
@@ -214,7 +216,7 @@ public class Main {
      * 
      * @param slotMachine The slot machine instance
      */
-    private static void printPaylines(SlotMachine slotMachine) {
+    private static void printPaylines(ISlotMachine slotMachine) {
         int[][] paylines = slotMachine.getPaylines();
         System.out.println("--- Paylines ---");
         for (int i = 0; i < paylines.length; i++) {
@@ -232,10 +234,10 @@ public class Main {
      * @param lineWins List of winning lines
      * @param paylines The current paylines (dynamic)
      */
-    public static boolean[][] getHighlightMatrix(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins,
+    public static boolean[][] getHighlightMatrix(Symbol[][] grid, java.util.List<SpinResult.LineWin> lineWins,
             int[][] paylines) {
         boolean[][] highlight = new boolean[grid.length][grid[0].length];
-        for (SlotMachine.LineWin win : lineWins) {
+        for (SpinResult.LineWin win : lineWins) {
             int[] payline = (win.lineIndex - 1 < paylines.length && win.lineIndex - 1 >= 0)
                     ? paylines[win.lineIndex - 1]
                     : null;
@@ -257,7 +259,7 @@ public class Main {
      * @param lineWins List of winning lines
      * @param paylines The current paylines (dynamic)
      */
-    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SlotMachine.LineWin> lineWins,
+    private static void printHighlightedGrid(Symbol[][] grid, java.util.List<SpinResult.LineWin> lineWins,
             int[][] paylines) {
         boolean[][] highlight = getHighlightMatrix(grid, lineWins, paylines);
         for (int row = 0; row < grid.length; row++) {
@@ -281,9 +283,9 @@ public class Main {
      * 
      * @param result The result of the spin
      */
-    private static void printSpinSummary(SlotMachine.SpinResult result) {
+    private static void printSpinSummary(SpinResult result) {
         if (!result.lineWins.isEmpty()) {
-            for (SlotMachine.LineWin win : result.lineWins) {
+            for (SpinResult.LineWin win : result.lineWins) {
                 String lineName = win.lineIndex >= 1 && win.lineIndex <= PAYLINE_NAMES.length
                         ? PAYLINE_NAMES[win.lineIndex - 1]
                         : ("Line " + win.lineIndex);
@@ -305,7 +307,7 @@ public class Main {
      * @param slotMachine The slot machine instance
      * @throws IOException If an input or output exception occurred
      */
-    private static void changeBetAmount(BufferedReader reader, SlotMachine slotMachine) throws IOException {
+    private static void changeBetAmount(BufferedReader reader, ISlotMachine slotMachine) throws IOException {
         int[] options = slotMachine.getBetOptions();
         System.out.println("Choose your bet amount:");
         for (int i = 0; i < options.length; i++) {
@@ -354,7 +356,7 @@ public class Main {
      * @param autospinCount Number of auto-spins to run
      * @throws IOException If an input or output exception occurred
      */
-    private static void runAutoSpins(SlotMachine slotMachine, SessionStats stats, BufferedReader reader, int autospinCount) throws IOException {
+    private static void runAutoSpins(ISlotMachine slotMachine, SessionStats stats, BufferedReader reader, int autospinCount) throws IOException {
         System.out.printf("Running %d auto-spins...%n", autospinCount);
         int autoTotalWon = 0;
         int autoBiggestWin = 0;
@@ -364,7 +366,7 @@ public class Main {
         for (int i = 0; i < autospinCount; i++) {
             if (autoBalance < slotMachine.getBetAmount()) break;
             autoBalance -= slotMachine.getBetAmount();
-            SlotMachine.SpinResult result = slotMachine.spinAndEvaluate();
+            SpinResult result = slotMachine.spinAndEvaluate();
             if (result.totalPayout > 0) {
                 autoBalance += result.totalPayout;
                 autoTotalWon += result.totalPayout;
